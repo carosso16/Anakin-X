@@ -1,0 +1,20 @@
+[package]
+name = "HelpDesk"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+async-trait = "0.1.77"
+serde_json = "1.0"
+axum = { version = "0.7.5", features = ["macros"] } # <--- MUDE PARA UMA VERSÃO ESTÁVEL E COMPATÍVEL
+bcrypt = "0.15.1" # Versão estável
+chrono = { version = "0.4.38", features = ["serde", "clock"] } # Versão estável
+dotenv = "0.15.0"
+jsonwebtoken = "9.3.0" # Versão estável (9.3.1 não parece existir)
+md5 = "0.7.0"
+serde = "1.0.203" # Ou simplesmente "1.0" para a última 1.x.x
+sqlx = {version = "0.7.4", features = ["mysql", "runtime-tokio-native-tls", "macros", "chrono"]} # Versão estável
+tera = "1.20.0"
+tokio = { version = "1.37.0", features = ["full", "rt-multi-thread"] } # Versão estável
+tower-http = { version = "0.5.2", features = ["fs"] } # Versão estável
