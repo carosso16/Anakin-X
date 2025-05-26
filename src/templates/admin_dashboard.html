@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Gerenciar Chamados</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Montserrat", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #2c3e50;
+        color: #ecf0f1;
+      }
+      nav.admin-nav {
+        background-color: #34495e;
+      }
+      .table-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 25px;
+        background: #3a4a5b;
+        border-radius: 8px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #46586b;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      thead {
+        background-color: #5688c7;
+      }
+      thead th {
+        color: #ffffff;
+        font-weight: 700;
+      }
+      th,
+      td {
+        padding: 12px 15px;
+        border: 1px solid #5a6f84;
+        text-align: left;
+        vertical-align: middle;
+      }
+      tbody tr:nth-child(even) {
+        background-color: #415263;
+      }
+      tbody tr:hover {
+        background-color: #50677e;
+      }
+      .priority-form {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 220px;
+      }
+      .priority-form select {
+        background-color: #5a6f84;
+        color: #ecf0f1;
+        border: 1px solid #6b8197;
+        flex-grow: 1;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 0.25rem;
+      }
+      .priority-form button {
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+      .ticket-description {
+        max-height: 140px;
+        overflow-y: auto;
+        font-size: 0.85em;
+        white-space: pre-wrap;
+        background-color: rgba(0, 0, 0, 0.15);
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #5a6f84;
+      }
+      h2.admin-title {
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #ffffff;
+      }
+      .navbar .btn-danger {
+        font-weight: 700;
+      }
+      .status-fechado {
+        color: #000000;
+        background-color: #f0f0f0;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-style: italic;
+        display: inline-block;
+      }
+      @media (max-width: 992px) {
+        .priority-form {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .priority-form select,
+        .priority-form button {
+          width: 100%;
+          margin-bottom: 5px;
+        }
+      }
+    </style>
+    <script>
+      // Verifica o token no carregamento da página e redireciona para o login se não existir.
+      const tokenOnLoadForAdminPage = localStorage.getItem("token");
+      if (!tokenOnLoadForAdminPage) {
+        window.location.href = "/login";
+      }
+    </script>
+  </head>
+  <body>
+    <nav class="navbar admin-nav navbar-dark justify-content-between px-4">
+      <a class="navbar-brand text-white fw-bold" href="/admin/dashboard"
+        >PAINEL ADMIN - ANAKIN X</a
+      >
+      <button id="adminLogoutBtn" class="btn btn-danger">Logout</button>
+    </nav>
+
+    <div class="container-fluid mt-4 table-container">
+      <h2 class="text-center admin-title">Gerenciamento de Chamados</h2>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Cliente</th>
+              <th>Categoria</th>
+              <th>Status</th>
+              <th style="min-width: 250px">Descrição</th>
+              <th>Prioridade Atual</th>
+              <th style="min-width: 250px">Definir Prioridade</th>
+            </tr>
+          </thead>
+          <tbody id="admin-ticket-table-body">
+            <tr>
+              <td colspan="8" class="text-center py-4">
+                Carregando chamados...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      let prioritiesOptions = ["Baixa", "Média", "Alta"]; // Fallback inicial
+      try {
+        // Tenta obter as opções de prioridade injetadas pelo Tera.
+        const rawJson =
+          '{{ priorities_options_json | default(value="[]") | safe }}';
+        if (rawJson && rawJson.startsWith("[") && rawJson.endsWith("]")) {
+          prioritiesOptions = JSON.parse(rawJson);
+        } else if (
+          rawJson !==
+          '{{ priorities_options_json | default(value="[]") | safe }}'.replace(
+            /"/g,
+            "&quot;"
+          )
+        ) {
+          console.error(
+            "admin_dashboard.html: priorities_options_json não é um array JSON válido. Usando fallback. String recebida:",
+            rawJson
+          );
+        } else {
+          // Se não foi substituído pelo Tera, usa o fallback.
+        }
+      } catch (e) {
+        console.error(
+          "admin_dashboard.html: Erro ao fazer JSON.parse de priorities_options_json. Usando fallback.",
+          e
+        );
+      }
+
+      // Função para carregar e exibir os tickets do administrador.
+      async function carregarTicketsAdmin() {
+        const token = localStorage.getItem("token");
+        const tbody = document.getElementById("admin-ticket-table-body");
+
+        if (!tbody) {
+          console.error(
+            "admin_dashboard.html: Elemento tbody da tabela não encontrado!"
+          );
+          return;
+        }
+        // Se o script do <head> já redirecionou, esta verificação é uma segurança adicional.
+        if (!token) {
+          tbody.innerHTML =
+            '<tr><td colspan="8" class="text-center py-4">Acesso negado. Faça login.</td></tr>';
+          return;
+        }
+
+        try {
+          const response = await fetch("/admin/dashboard-data", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+              alert(
+                "Acesso negado ou sessão expirada. Por favor, faça login novamente."
+              );
+              localStorage.removeItem("token");
+              window.location.href = "/login";
+            } else {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(
+                errorData.erro ||
+                  `Erro ao carregar dados (Status: ${response.status})`
+              );
+            }
+            return;
+          }
+
+          const data = await response.json();
+          tbody.innerHTML = ""; // Limpa a mensagem de "carregando".
+
+          if (!data.tickets || data.tickets.length === 0) {
+            tbody.innerHTML =
+              '<tr><td colspan="8" class="text-center py-4">Nenhum chamado encontrado.</td></tr>';
+            return;
+          }
+
+          data.tickets.forEach((ticket) => {
+            const tr = document.createElement("tr");
+            let setPriorityHTML = "";
+
+            if (ticket.ticket_status === "Aberto") {
+              let priorityOptionsHTML = "";
+              if (Array.isArray(prioritiesOptions)) {
+                prioritiesOptions.forEach((prioOptStr) => {
+                  const selected =
+                    prioOptStr === ticket.ticket_priority ? "selected" : "";
+                  priorityOptionsHTML += `<option value="${prioOptStr}" ${selected}>${prioOptStr}</option>`;
+                });
+              }
+              setPriorityHTML = `
+                            <form class="priority-form" data-ticket-id="${ticket.ticket_id}">
+                                <select name="priority" class="form-select form-select-sm">${priorityOptionsHTML}</select>
+                                <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
+                            </form>
+                        `;
+            } else {
+              setPriorityHTML = `<span class="status-fechado">Não editável</span>`;
+            }
+
+            tr.innerHTML = `
+                        <td>${ticket.ticket_id || "N/A"}</td>
+                        <td>${ticket.ticket_title || ""}</td>
+                        <td>${ticket.ticket_client_name || "N/A"} (ID: ${
+              ticket.ticket_client_id || "N/A"
+            })</td>
+                        <td>${ticket.ticket_category || ""}</td>
+                        <td>${ticket.ticket_status || ""}</td>
+                        <td><div class="ticket-description" title="${
+                          ticket.ticket_description || ""
+                        }">${ticket.ticket_description || ""}</div></td>
+                        <td id="current-priority-${ticket.ticket_id}">${
+              ticket.ticket_priority || ""
+            }</td>
+                        <td>${setPriorityHTML}</td>
+                    `;
+            tbody.appendChild(tr);
+
+            if (ticket.ticket_status === "Aberto") {
+              const form = tr.querySelector(".priority-form");
+              if (form) form.addEventListener("submit", handlePrioritySubmit);
+            }
+          });
+        } catch (error) {
+          console.error(
+            "admin_dashboard.html: Erro em carregarTicketsAdmin:",
+            error
+          );
+          if (tbody)
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Erro ao carregar dados: ${error.message}</td></tr>`;
+        }
+      }
+
+      // Handler para submissão do formulário de alteração de prioridade.
+      async function handlePrioritySubmit(e) {
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Sessão expirada. Por favor, faça login novamente.");
+          window.location.href = "/login";
+          return;
+        }
+
+        const ticketId = this.dataset.ticketId;
+        const selectedPriorityValue = this.querySelector(
+          'select[name="priority"]'
+        ).value;
+
+        try {
+          const response = await fetch(
+            `/admin/tickets/${ticketId}/set-priority`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ priority: selectedPriorityValue }),
+            }
+          );
+
+          const result = await response.json().catch(() => null);
+          if (response.ok) {
+            alert(result?.mensagem || "Prioridade atualizada com sucesso!");
+            const currentPriorityCell = document.getElementById(
+              `current-priority-${ticketId}`
+            );
+            if (currentPriorityCell)
+              currentPriorityCell.textContent = selectedPriorityValue;
+          } else {
+            alert(
+              "Erro: " +
+                (result?.erro || "Não foi possível atualizar a prioridade.")
+            );
+          }
+        } catch (error) {
+          console.error(
+            "admin_dashboard.html: Erro de rede em handlePrioritySubmit:",
+            error
+          );
+          alert("Erro de rede ao definir prioridade.");
+        }
+      }
+
+      // Listener para executar quando o DOM estiver pronto.
+      document.addEventListener("DOMContentLoaded", function () {
+        // O script no <head> já deve ter verificado o token e redirecionado se necessário.
+        // Chamamos carregarTicketsAdmin se o token ainda estiver presente.
+        if (localStorage.getItem("token")) {
+          carregarTicketsAdmin();
+        } else {
+          // Se, por algum motivo, o token não estiver aqui, mas o script do head não redirecionou,
+          // podemos mostrar uma mensagem no tbody.
+          const tbody = document.getElementById("admin-ticket-table-body");
+          if (tbody)
+            tbody.innerHTML =
+              '<tr><td colspan="8" class="text-center py-4">Sessão não encontrada. Por favor, <a href="/login">faça login</a>.</td></tr>';
+        }
+
+        const logoutBtn = document.getElementById("adminLogoutBtn");
+        if (logoutBtn) {
+          logoutBtn.addEventListener("click", () => {
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

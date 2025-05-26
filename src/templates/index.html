@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bem-vindo ao Anakin X Help Desk</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Estilos gerais para o corpo da página */
+      body {
+        font-family: "Montserrat", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #1a395f; /* Cor de fundo azul escuro */
+        color: #f0f0f0; /* Cor de texto clara para contraste */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh; /* Altura mínima para ocupar toda a tela */
+        text-align: center;
+        padding: 20px;
+        box-sizing: border-box; /* Garante que padding não aumente o tamanho total */
+      }
+
+      /* Container para o conteúdo de boas-vindas */
+      .welcome-container {
+        max-width: 700px;
+      }
+
+      /* Estilo para o título principal */
+      h1 {
+        color: #ffffff;
+        font-size: 3.5rem;
+        font-weight: 900; /* Fonte bem destacada */
+        margin-bottom: 0.5em;
+        line-height: 1.2;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Leve sombra para profundidade */
+      }
+
+      /* Estilo para o subtítulo/parágrafo de descrição */
+      p.subtitle {
+        color: #d0e0ff; /* Azul claro suave */
+        font-size: 1.25rem;
+        margin-bottom: 2em;
+        line-height: 1.6;
+        max-width: 550px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Estilo para o botão de "call to action" */
+      .button-start {
+        display: inline-block;
+        padding: 15px 35px;
+        margin-top: 20px;
+        color: #ffffff;
+        background-color: #5688c7; /* Cor de fundo do botão */
+        border: none;
+        border-radius: 50px; /* Bordas bem arredondadas */
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .button-start:hover,
+      .button-start:focus {
+        background-color: #4a77b0; /* Cor do botão no hover/focus */
+        color: #ffffff;
+        transform: translateY(-2px); /* Leve efeito de elevação */
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      }
+
+      /* Ajustes de responsividade */
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2.8rem;
+        }
+        p.subtitle {
+          font-size: 1.1rem;
+        }
+        .button-start {
+          padding: 12px 30px;
+          font-size: 1rem;
+        }
+      }
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 2.2rem;
+        }
+        p.subtitle {
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="welcome-container">
+      <h1>Bem-vindo ao Anakin X</h1>
+      <p class="subtitle">Sua solução de help desk eficiente e intuitiva.</p>
+      <a href="/login" class="button-start">Vamos Começar</a>
+    </div>
+  </body>
+</html>
